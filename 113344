@@ -1,0 +1,68 @@
+
+    import json
+import time
+
+# Apna Deriv API token yahan dalein
+API_TOKEN = "APNA_API_TOKEN"
+BASE_URL = "wss://ws.binaryws.com/websockets/v3?app_id=1089&l=EN"  # Deriv WebSocket endpoint
+
+bot_activated = False
+trade_count = 0
+
+# Function to simulate a buy (demo mode)
+def buy_contract():
+    global trade_count
+    trade_count += 1
+    print(f"[DEMO] Trade executed! Total trades: {trade_count}")
+
+# Since the websocket-client library may not be available in some environments,
+# we will implement a placeholder polling simulation instead of real WebSocket usage.
+try:
+    import websocket
+    websocket_available = True
+except ImportError:
+    print("The 'websocket-client' library is missing. Switching to simulated polling mode.")
+    websocket_available = False
+
+# Function to simulate receiving ticks
+import random
+
+def get_tick():
+    # Simulate R_100 last digit between 0-9
+    simulated_price = random.randint(10000000, 99999999) / 100000  # Random price
+    return simulated_price
+
+# Main loop for polling mode
+def bot_loop():
+    global bot_activated
+    while True:
+        last_price = get_tick()
+        last_digit = int(str(last_price)[-1])
+        print(f"Current price: {last_price}, Last digit: {last_digit}")
+
+        if not bot_activated:
+            if last_digit == 1:
+                bot_activated = True
+                print("Bot activated ✅ - waiting for next tick")
+        else:
+            if last_digit == 2:
+                print("Buying now 💰")
+                buy_contract()
+            else:
+                print("2 did not appear. Bot reset ❌")
+            bot_activated = False
+
+        time.sleep(1)  # Wait 1 second before next tick
+
+if __name__ == "__main__":
+    print("Starting Deriv Last Digit Bot (Simulated Mode) ✅")
+    if websocket_available:
+        # Original WebSocket mode
+        ws_app = websocket.WebSocketApp(BASE_URL, on_message=on_message, on_open=on_open)
+        try:
+            ws_app.run_forever()
+        except Exception as e:
+            print(f"WebSocket error occurred: {e}")
+    else:
+        # Fallback to simulated polling mode
+        bot_loop()
